@@ -86,7 +86,7 @@ class PULL:
     def support_colors(self):
         plat = sys.platform
         supported_platform = plat != 'Pocket PC' and (plat != 'win32' or \
-														'ANSICON' in os.environ)
+                                                        'ANSICON' in os.environ)
         is_a_tty = hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
         if not supported_platform or not is_a_tty:
             return False
@@ -272,6 +272,7 @@ class CLIENT:
 
         while True:
             chunk = self.sock.recv(4096)
+            print(len(chunk))
             if not chunk:
                 self.STATUS = "Disconnected"
                 break
@@ -291,7 +292,16 @@ class CLIENT:
         t.start()
 
     def send_data(self, val):
-        self.sock.send(base64.encodebytes(val.encode('utf-8')) + self.KEY.encode('utf-8'))
+        bef = base64.encodebytes(val.encode('utf-8')) + self.KEY.encode('utf-8')
+        new = ''
+        for i in bef:
+          new+=chr(i^76)
+          print(i^76)
+        new = new.encode()
+        print("_________________")
+        for i in new:
+          print(i)
+        self.sock.send(bef)
 
     def recv_data(self):
         while not self.MESSAGE:
@@ -485,6 +495,7 @@ class INTERFACE(COMMCENTER):
     def bind(self):
         self.SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
+            self.SOCKET.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.SOCKET.bind((self.address, self.port))
             pull.print("Successfuly Bind to %s%s:%i" % (
                 pull.RED,
@@ -492,6 +503,7 @@ class INTERFACE(COMMCENTER):
                 self.port,
             ))
         except Exception as e:
+            print(e)
             pull.exit("Unable to bind to %s%s:%i" % (
                 pull.RED,
                 self.address,
